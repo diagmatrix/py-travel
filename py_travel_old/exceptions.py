@@ -22,4 +22,4 @@ class MissingDataError(Exception):
     def __init__(self, value: str, message: str = "Response missing field") -> None:
         self.message = message
         self.value = value
-        super().__init__(f'{self.message}: {self.value}')
+        super().__init__(f"{self.message}: {self.value}")

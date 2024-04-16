@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Any, Tuple, Dict
 
-from py_travel.models import Client, Location, Trip
-from py_travel.exceptions import ClientNotInitializedError, MissingDataError
+from py_travel_old.models import Client, Location, Trip
+from py_travel_old.exceptions import ClientNotInitializedError, MissingDataError
 
 
 def get_step_data(trip_data: Dict[str, Any]) -> Tuple[float, timedelta, Location, Dict]:
@@ -15,19 +15,19 @@ def get_step_data(trip_data: Dict[str, Any]) -> Tuple[float, timedelta, Location
     """
 
     # Get distance travelled
-    if (distance := trip_data.get('distance', {}).get('value', None)) is None:
-        raise MissingDataError('distance')
+    if (distance := trip_data.get("distance", {}).get("value", None)) is None:
+        raise MissingDataError("distance")
     distance: float = float(distance) / 1000
 
     # Get travel duration
-    if (duration_seconds := trip_data.get('duration', {}).get('value', None)) is None:
-        raise MissingDataError('duration')
+    if (duration_seconds := trip_data.get("duration", {}).get("value", None)) is None:
+        raise MissingDataError("duration")
     duration: timedelta = timedelta(seconds=duration_seconds)
 
     # Get end location
-    if (coords := trip_data.get('end_location', None)) is None:
-        raise MissingDataError('end_location')
-    end_address = trip_data.get('end_address', '')
+    if (coords := trip_data.get("end_location", None)) is None:
+        raise MissingDataError("end_location")
+    end_address = trip_data.get("end_address", "")
     end_location = Location(address=end_address, **coords)
 
     return distance, duration, end_location, {}
@@ -35,16 +35,21 @@ def get_step_data(trip_data: Dict[str, Any]) -> Tuple[float, timedelta, Location
 
 class TripManager(Client):
     @classmethod
-    def calculate_trip(cls, origin: str, destination: str, departure_date: datetime = datetime.now(), arrival_date: datetime = None) -> Trip:
+    def calculate_trip(
+        cls,
+        origin: str,
+        destination: str,
+        departure_date: datetime = datetime.now(),
+        arrival_date: datetime = None,
+    ) -> Trip:
         if not cls.client:
             raise ClientNotInitializedError()
         else:
-            gmaps_response: Dict = cls.client.directions(origin=origin, destination=destination)[0]
-            trip_data: Dict = gmaps_response.get('legs', [{}])[0]
+            gmaps_response: Dict = cls.client.directions(
+                origin=origin, destination=destination
+            )[0]
+            trip_data: Dict = gmaps_response.get("legs", [{}])[0]
 
             trip_kms, trip_duration, trip_end_location, trip = get_step_data(trip_data)
 
             return Trip(trip_kms, trip_duration, end_location=trip_end_location)
-
-
-

@@ -1,3 +1,4 @@
+from .trip_manager import TripManager
 from .models import Client
 
 
@@ -10,3 +11,6 @@ def init_client(api_key: str) -> None:
     """
 
     Client.set_client(api_key=api_key)
+
+
+__all__ = ["init_client", "TripManager"]
