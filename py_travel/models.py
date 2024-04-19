@@ -1,7 +1,7 @@
 import googlemaps
 from datetime import datetime
 from dataclasses import dataclass
-from typing import Tuple, List
+from typing import Tuple, List, NamedTuple
 
 
 @dataclass
@@ -19,16 +19,8 @@ class Location:
     lng: float | None = None
     address: str | None = None
 
-    @classmethod
-    def from_coords_or_str(cls, arg: Tuple[float, float] | str) -> "Location":
-        if isinstance(arg, str):
-            return Location(address=arg)
-        if isinstance(arg, tuple):
-            return Location(lat=arg[0], lng=arg[1])
-        else:
-            raise TypeError(
-                "Argument must be a string or a tuple containing two floats"
-            )
+
+Stop = NamedTuple("Stop", location=Location, departure_date=datetime)  # Represents a stop in the trip
 
 
 class Client:
@@ -60,36 +52,51 @@ class Trip(Client):
         destination: Destination of the trip
         start_date: Start date of the trip
         end_date: End date of the trip
+        stops: List of stops associated with the trip
     """
+
+    @staticmethod
+    def __input_to_location(data: Tuple[float, float] | str | Location) -> Location:
+        """
+        Converts a given 'Location' into a location object
+
+        :param data: Tuple with (latitude, longitude), string address or Location object
+        :return: A Location object from the given data
+        """
+        if isinstance(data, Location):
+            return data
+        if isinstance(data, str):
+            return Location(address=data)
+        if isinstance(data, tuple):
+            return Location(lat=data[0], lng=data[1])
+        else:
+            raise TypeError(
+                "Argument must be a string or a tuple containing two floats"
+            )
 
     def __init__(
         self,
         origin: Tuple[float, float] | str | Location,
         destination: Tuple[float, float] | str | Location,
-        start_date: datetime,
-        end_date: datetime,
+        start_date: datetime = None,
+        end_date: datetime = None,
     ) -> None:
         """
         Initialize Trip object
 
         :param origin: Origin of the trip in pair (latitude, longitude) or address or Location object
         :param destination: Destination of the trip in pair (latitude, longitude) or address or Location object
-        :param start_date: Start date of the trip
-        :param end_date: End date of the trip
+        :param start_date: Start date of the trip (optional)
+        :param end_date: End date of the trip (optional)
         """
 
-        if isinstance(origin, Location):
-            self.origin = origin
-        else:
-            self.origin = Location.from_coords_or_str(origin)
-
-        if isinstance(destination, Location):
-            self.destination = destination
-        else:
-            self.destination = Location.from_coords_or_str(destination)
+        self.origin = self.__input_to_location(origin)
+        self.destination = self.__input_to_location(destination)
 
         self.start_date = start_date
         self.end_date = end_date
+
+        self.stops: List[Stop] = []
 
     def add_stops(self, stops: List[Tuple[Tuple[float, float] | str | Location, datetime]]) -> None:
         """
@@ -99,3 +106,5 @@ class Trip(Client):
             address or a Location object) and the departure date from the stop
         """
 
+        self.stops.extend([Stop(self.__input_to_location(loc), dep_date) for loc, dep_date in stops])
+        self.stops.sort(key=lambda stop: stop.departure_date)
