@@ -1,4 +1,4 @@
-from .models import Client, Trip
+from .models import Client, Trip, Location, TripConfig
 
 
 def init_client(api_key: str) -> None:
@@ -12,4 +12,4 @@ def init_client(api_key: str) -> None:
     Client.set_client(api_key=api_key)
 
 
-__all__ = ["init_client", "Trip"]
+__all__ = ["init_client", "Trip", "Location", "TripConfig"]
