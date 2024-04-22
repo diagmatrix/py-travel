@@ -3,7 +3,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from typing import Tuple, List, NamedTuple, Dict, Literal, TypedDict
 
-from .exceptions import ClientNotInitializedError
+from .exceptions import ClientNotInitializedError, TripWarning
 
 
 @dataclass
@@ -48,9 +48,7 @@ def input_to_location(data: Tuple[float, float] | str | Location) -> Location:
     if isinstance(data, tuple):
         return Location(lat=data[0], lng=data[1])
     else:
-        raise TypeError(
-            "Argument must be a string or a tuple containing two floats"
-        )
+        raise TypeError("Argument must be a string or a tuple containing two floats")
 
 
 Stop = NamedTuple(
@@ -208,29 +206,98 @@ class Trip(Client):
         if not self.client:
             raise ClientNotInitializedError()
 
-        # Make 1 + n_stops calls to the API if the trip has stops
+        # Make calls to the API
         if self.stops:
-            raise NotImplementedError
-        # Make 1 call if the trip doesn't
+            current_location = self.origin
+            current_date = self.start_date if self.start_date else datetime.now()  # HTTP Error 400 otherwise...
+
+            if self.end_date:
+                TripWarning.ignore_field('end_date', 'Ignored for trips with stops')
+
+            # Call for each stop
+            for index, stop in enumerate(self.stops):
+                key = f'stage_{index}' if index > 0 else 'departure'
+
+                self.raw_result[key] = self.client.directions(
+                    origin=(
+                        current_location.coords
+                        if current_location.coords
+                        else current_location.address
+                    ),
+                    destination=(
+                        stop.location.coords
+                        if stop.location.coords
+                        else stop.location.address
+                    ),
+                    departure_time=current_date,
+                    **self.config,
+                )[0]
+
+                current_location = stop.location
+                current_date = stop.departure_date
+
+            # Call for last stage of the trip
+            self.raw_result['arrival'] = self.client.directions(
+                origin=(
+                    current_location.coords
+                    if current_location.coords
+                    else current_location.address
+                ),
+                destination=(
+                    self.destination.coords
+                    if self.destination.coords
+                    else self.destination.address
+                ),
+                departure_time=current_date,
+                **self.config,
+            )[0]
+
         else:
+            # Call depending on the given fields and configuration
             if self.start_date:
                 self.raw_result = self.client.directions(
-                    origin=self.origin.coords if self.origin.coords else self.origin.address,
-                    destination=self.destination.coords if self.destination.coords else self.destination.address,
+                    origin=(
+                        self.origin.coords
+                        if self.origin.coords
+                        else self.origin.address
+                    ),
+                    destination=(
+                        self.destination.coords
+                        if self.destination.coords
+                        else self.destination.address
+                    ),
                     departure_time=self.start_date,
                     **self.config,
                 )[0]
-            elif self.end_date and self.config.get('mode', 'no_mode') == 'transit':
+            elif self.end_date and self.config.get("mode", "no_mode") == "transit":
                 self.raw_result = self.client.directions(
-                    origin=self.origin.coords if self.origin.coords else self.origin.address,
-                    destination=self.destination.coords if self.destination.coords else self.destination.address,
-                    arrival_date=self.end_date,
+                    origin=(
+                        self.origin.coords
+                        if self.origin.coords
+                        else self.origin.address
+                    ),
+                    destination=(
+                        self.destination.coords
+                        if self.destination.coords
+                        else self.destination.address
+                    ),
+                    arrival_time=self.end_date,
                     **self.config,
                 )[0]
+            elif self.end_date and not self.config.get("mode", "no_mode") == "transit":
+                TripWarning.ignore_field("end_date", "Only used for transit mode")
             else:
                 self.raw_result = self.client.directions(
-                    origin=self.origin.coords if self.origin.coords else self.origin.address,
-                    destination=self.destination.coords if self.destination.coords else self.destination.address,
+                    origin=(
+                        self.origin.coords
+                        if self.origin.coords
+                        else self.origin.address
+                    ),
+                    destination=(
+                        self.destination.coords
+                        if self.destination.coords
+                        else self.destination.address
+                    ),
                     departure_time=datetime.now(),  # HTTP Error 400 otherwise...
                     **self.config,
                 )[0]
