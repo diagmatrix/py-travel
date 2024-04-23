@@ -1,4 +1,4 @@
-from .models import Trip, TripConfig
+from .trip import Trip, TripConfig
 from .location import Location
 from .client import Client
 
