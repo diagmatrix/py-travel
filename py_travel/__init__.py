@@ -1,4 +1,6 @@
-from .models import Client, Trip, Location, TripConfig
+from .models import Trip, TripConfig
+from .location import Location
+from .client import Client
 
 
 def init_client(api_key: str) -> None:
