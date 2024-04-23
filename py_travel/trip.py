@@ -1,15 +1,16 @@
 from datetime import datetime
 from typing import Tuple, List, Dict, Literal, TypedDict
 
-from .exceptions import ClientNotInitializedError, TripWarning
+from .exceptions import ClientNotInitializedError, TripWarning, InvalidResponseError
 from .location import Location, input_to_location
+from .utils import meters_to_miles
 from .vars import (
     Stop,
     TRIP_MODES,
     AVOID_FEATURES,
     TRANSIT_MODES,
     TRANSIT_PREFERENCES,
-    TRAFFIC_MODE,
+    TRAFFIC_MODE, METRIC_SYSTEMS,
 )
 from .client import Client
 
@@ -29,7 +30,7 @@ class TripConfig(TypedDict, total=False):
 
     mode: TRIP_MODES
     avoid: List[AVOID_FEATURES] | AVOID_FEATURES
-    units: Literal["metric", "imperial"]
+    units: METRIC_SYSTEMS
     transit_mode: List[TRANSIT_MODES] | TRANSIT_MODES
     transit_routing_preference: TRANSIT_PREFERENCES
     traffic_model: TRAFFIC_MODE
@@ -220,6 +221,15 @@ class Trip(Client):
         """
         return self.__api_response
 
+    def set_response(self, response: Dict) -> None:
+        """
+        Set the response from the Google Maps API. USE ONLY FOR TESTS
+
+        TODO: Remove this
+        """
+        self.__api_response = response
+        self.__updated = False
+
     def calculate_trip(self, trip_config: TripConfig = None) -> Dict:
         """
         Calls the Google Maps API to calculate the trip, only if the trip needs to be updated.
@@ -288,7 +298,7 @@ class Trip(Client):
             ):
                 date_argument = {"arrival_time": self.__arrival_date}
             else:
-                date_argument = {}
+                date_argument = {"departure_time": datetime.now()}  # Fixes HTTP 400 error
 
             self.__api_response = self.client.directions(
                 origin=self.__origin.get_data(),
@@ -299,3 +309,27 @@ class Trip(Client):
 
         self.__updated = False
         return self.__api_response
+
+    @property
+    def distance(self) -> float:
+        """
+        Warning: If the trip is marked as updated, it will first calculate the trip
+        :return: The total distance of the trip in the unit given in the config ('metric' if not configured).
+        """
+
+        if self.__updated:
+            self.calculate_trip()
+
+        if self.__stops:
+            meters = 0.0
+            for stage in self.__api_response.values():
+                stage_meters = stage.get("legs", [{}])[0].get("distance", {}).get("value", None)
+                if not stage_meters:
+                    raise InvalidResponseError('legs[0].distance.value')
+                meters += stage_meters
+        else:
+            meters: float | None = self.__api_response.get("legs", [{}])[0].get("distance", {}).get("value", None)
+            if not meters:
+                raise InvalidResponseError('legs[0].distance.value')
+
+        return meters / 1000 if self.__config.get("units", "metric") == "metric" else meters_to_miles(meters)

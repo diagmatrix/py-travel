@@ -29,3 +29,17 @@ class ClientNotInitializedError(Exception):
     def __init__(self, message: str = "Client not initialized") -> None:
         self.message = message
         super().__init__(self.message)
+
+
+class InvalidResponseError(Exception):
+    """Exception raised when the Google Maps API response does not contain the expected fields
+
+    Attributes:
+        field: Missing field
+        message: Explanation of the exception (optional)
+        """
+
+    def __init__(self, field: str, message: str = "Invalid API response") -> None:
+        self.field = field
+        self.message = message
+        super().__init__(self.message)
