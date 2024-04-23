@@ -37,7 +37,7 @@ class InvalidResponseError(Exception):
     Attributes:
         field: Missing field
         message: Explanation of the exception (optional)
-        """
+    """
 
     def __init__(self, field: str, message: str = "Invalid API response") -> None:
         self.field = field

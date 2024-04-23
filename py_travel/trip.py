@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Tuple, List, Dict, Literal, TypedDict
+from typing import Tuple, List, Dict, TypedDict
 
 from .exceptions import ClientNotInitializedError, TripWarning, InvalidResponseError
 from .location import Location, input_to_location
@@ -10,7 +10,8 @@ from .vars import (
     AVOID_FEATURES,
     TRANSIT_MODES,
     TRANSIT_PREFERENCES,
-    TRAFFIC_MODE, METRIC_SYSTEMS,
+    TRAFFIC_MODE,
+    METRIC_SYSTEMS,
 )
 from .client import Client
 
@@ -298,7 +299,9 @@ class Trip(Client):
             ):
                 date_argument = {"arrival_time": self.__arrival_date}
             else:
-                date_argument = {"departure_time": datetime.now()}  # Fixes HTTP 400 error
+                date_argument = {
+                    "departure_time": datetime.now()
+                }  # Fixes HTTP 400 error
 
             self.__api_response = self.client.directions(
                 origin=self.__origin.get_data(),
@@ -323,13 +326,65 @@ class Trip(Client):
         if self.__stops:
             meters = 0.0
             for stage in self.__api_response.values():
-                stage_meters = stage.get("legs", [{}])[0].get("distance", {}).get("value", None)
+                stage_meters = (
+                    stage.get("legs", [{}])[0].get("distance", {}).get("value", None)
+                )
                 if not stage_meters:
-                    raise InvalidResponseError('legs[0].distance.value')
+                    raise InvalidResponseError("legs[0].distance.value")
                 meters += stage_meters
         else:
-            meters: float | None = self.__api_response.get("legs", [{}])[0].get("distance", {}).get("value", None)
+            meters = (
+                self.__api_response.get("legs", [{}])[0]
+                .get("distance", {})
+                .get("value", None)
+            )
             if not meters:
-                raise InvalidResponseError('legs[0].distance.value')
+                raise InvalidResponseError("legs[0].distance.value")
 
-        return meters / 1000 if self.__config.get("units", "metric") == "metric" else meters_to_miles(meters)
+        return (
+            meters / 1000
+            if self.__config.get("units", "metric") == "metric"
+            else meters_to_miles(meters)
+        )
+
+    def get_distances(self) -> List[float]:
+        """
+        Returns the distances between the locations of the trip in a list starting from origin - 1st stop and ending
+        with last stop - destination. If the trip does not contain stops, the list will be of size 1.
+
+        Warning: If the trip is marked as updated, it will first calculate the trip
+
+        :return: A list of distances between the locations of the trip in order
+        """
+
+        if self.__updated:
+            self.calculate_trip()
+
+        distances: List[float] = []
+        if self.__stops:
+            for stage in self.__api_response.values():
+                stage_meters = (
+                    stage.get("legs", [{}])[0].get("distance", {}).get("value", None)
+                )
+                if not stage_meters:
+                    raise InvalidResponseError("legs[0].distance.value")
+
+                distances.append(stage_meters)
+        else:
+            meters = (
+                self.__api_response.get("legs", [{}])[0]
+                .get("distance", {})
+                .get("value", None)
+            )
+            if not meters:
+                raise InvalidResponseError("legs[0].distance.value")
+            distances.append(meters)
+
+        return [
+            (
+                distance / 1000
+                if self.__config.get("units", "metric") == "metric"
+                else meters_to_miles(distance)
+            )
+            for distance in distances
+        ]
