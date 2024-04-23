@@ -85,7 +85,7 @@ class Trip(Client):
         self.__departure_date = departure_date
         self.__arrival_date = arrival_date
 
-        self.__config = config
+        self.__config = config if config else {}
 
         self.__api_response: Dict = {}
         self.__updated = True
