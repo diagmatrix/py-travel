@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import Tuple, List, Dict, TypedDict
 
 from .exceptions import ClientNotInitializedError, TripWarning, InvalidResponseError
@@ -347,7 +347,7 @@ class Trip(Client):
             else meters_to_miles(meters)
         )
 
-    def get_distances(self) -> List[float]:
+    def distances(self) -> List[float]:
         """
         Returns the distances between the locations of the trip in a list starting from origin - 1st stop and ending
         with last stop - destination. If the trip does not contain stops, the list will be of size 1.
@@ -388,3 +388,18 @@ class Trip(Client):
             )
             for distance in distances
         ]
+
+    def distance_details(self) -> List[Tuple[date, float]]:
+        """
+        Creates a list of pairs day-kms travelled from the trip.
+
+        Because the Google Maps API does not provide exact data for this calculation, the distances travelled will be
+        an estimation.
+
+        :return: A list of pairs day-kms travelled
+        """
+
+        if self.__stops:
+            raise NotImplementedError
+        else:
+            raise NotImplementedError
