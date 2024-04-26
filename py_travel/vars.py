@@ -8,6 +8,10 @@ if TYPE_CHECKING:  # pragma: no cover
 class Stop(NamedTuple):
     """
     Tuple representing a stop
+
+    Attributes:
+        location: Location of the stop
+        departure_date: Departure date from the stop
     """
 
     location: "Location"
