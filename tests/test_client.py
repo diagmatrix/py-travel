@@ -44,7 +44,7 @@ class TestClient:
             raise ClientNotInitializedError()
 
         return [{
-            "legs": [{"distance": {"value": 1000}}],
+            "legs": [{"distance": {"value": 1000}, "duration": {"value": 60}}],
             "input": {
                 "origin": origin,
                 "destination": destination,

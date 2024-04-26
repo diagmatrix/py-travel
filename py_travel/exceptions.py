@@ -14,7 +14,19 @@ class TripWarning:
         :param field: Ignored field name
         :param message: Message to display
         """
+
         warn_message = f"IGNORED FIELD '{field}': {message}"
+        warnings.warn(warn_message, UserWarning, stacklevel=3)
+
+    @staticmethod
+    def update_date(date_name: str, message: str) -> None:
+        """
+        Warning raised when a date is automatically updated by a method
+        :param date_name: Field date name
+        :param message: Message to display
+        """
+
+        warn_message = f"UPDATED {date_name.upper()} DATE: {message}"
         warnings.warn(warn_message, UserWarning, stacklevel=3)
 
 
