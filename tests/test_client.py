@@ -43,18 +43,20 @@ class TestClient:
         if not self.key:
             raise ClientNotInitializedError()
 
-        return [{
-            "legs": [{"distance": {"value": 1000}, "duration": {"value": 60}}],
-            "input": {
-                "origin": origin,
-                "destination": destination,
-                "mode": mode,
-                "avoid": avoid,
-                "units": units,
-                "departure_time": departure_time,
-                "arrival_time": arrival_time,
-                "transit_mode": transit_mode,
-                "transit_routing_preference": transit_routing_preference,
-                "traffic_model": traffic_model,
-            },
-        }]
+        return [
+            {
+                "legs": [{"distance": {"value": 1000}, "duration": {"value": 60}}],
+                "input": {
+                    "origin": origin,
+                    "destination": destination,
+                    "mode": mode,
+                    "avoid": avoid,
+                    "units": units,
+                    "departure_time": departure_time,
+                    "arrival_time": arrival_time,
+                    "transit_mode": transit_mode,
+                    "transit_routing_preference": transit_routing_preference,
+                    "traffic_model": traffic_model,
+                },
+            }
+        ]

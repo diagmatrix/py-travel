@@ -1,20 +1,24 @@
-from fixtures import *
 import pytest
+from datetime import datetime
 
 from py_travel import Location, Trip
 
 
 class TestTrip:
     @pytest.mark.parametrize(
-        'test_input',
+        "test_input",
         [
             # Coordinates
-            {'origin': (0.0, 0.0), 'destination': (0.0, 0.0)},
+            {"origin": (0.0, 0.0), "destination": (0.0, 0.0)},
             # Address
-            {'origin': 'Test Origin', 'destination': 'Test Destination'},
+            {"origin": "Test Origin", "destination": "Test Destination"},
             # Location object
-            {'origin': Location(0.0, 0.0, 'Test Origin'), 'destination': Location(0.0, 0.0, 'Test Destination')}
-        ])
+            {
+                "origin": Location(0.0, 0.0, "Test Origin"),
+                "destination": Location(0.0, 0.0, "Test Destination"),
+            },
+        ],
+    )
     def test_create_trip(self, test_input):
         """
         Test that a Trip object can be instantiated
@@ -22,7 +26,7 @@ class TestTrip:
         try:
             Trip(**test_input)
         except TypeError:
-            pytest.fail('Invalid parameter')
+            pytest.fail("Invalid parameter")
 
     def test_distance(self, basic_trip, trip_stop):
         """
@@ -35,25 +39,25 @@ class TestTrip:
         """
         Test that the partial distances calculation works
         """
-        assert basic_trip.distances == [1]
-        assert trip_stop.distances == [1, 1]
+        assert basic_trip.stages_distances == [1]
+        assert trip_stop.stages_distances == [1, 1]
 
     def test_travel_time(self, basic_trip, trip_stop):
         """
         Test that the duration calculation works
         """
-        assert basic_trip.travel_time == 60
-        assert trip_stop.travel_time == 120
+        assert basic_trip.seconds == 60
+        assert trip_stop.seconds == 120
 
     def test_travel_times(self, basic_trip, trip_stop):
         """
         Test that the partial duration calculation works
         """
-        assert basic_trip.travel_times == [60]
-        assert trip_stop.travel_times == [60, 60]
+        assert basic_trip.stages_seconds == [60]
+        assert trip_stop.stages_seconds == [60, 60]
 
     @pytest.mark.parametrize(
-        ('departure', 'arrival'),
+        ("departure", "arrival"),
         [
             # No dates
             (None, None),
@@ -62,8 +66,8 @@ class TestTrip:
             # Only arrival
             (None, datetime.now()),
             # Departure & arrival
-            (datetime.now(), datetime.now())
-        ]
+            (datetime.now(), datetime.now()),
+        ],
     )
     def test_updated_dates(self, departure, arrival):
         """
@@ -72,7 +76,7 @@ class TestTrip:
 
         old_departure = departure
         old_arrival = arrival
-        trip = Trip('', '', departure_date=departure, arrival_date=arrival)
+        trip = Trip("", "", departure_date=departure, arrival_date=arrival)
         trip.calculate_trip()
 
         if not departure:
@@ -90,4 +94,3 @@ class TestTrip:
         trip_stop.calculate_trip()
 
         assert trip_stop.stops[0].departure_date != stop_date
-

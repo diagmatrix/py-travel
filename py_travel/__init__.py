@@ -15,4 +15,11 @@ def init_client(api_key: str) -> None:
     Client.set_client(api_key=api_key)
 
 
-__all__ = ["init_client", "Trip", "Location", "TripConfig", "ClientNotInitializedError", "Client"]
+__all__ = [
+    "init_client",
+    "Trip",
+    "Location",
+    "TripConfig",
+    "ClientNotInitializedError",
+    "Client",
+]
