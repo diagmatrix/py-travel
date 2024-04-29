@@ -55,3 +55,29 @@ class InvalidResponseError(Exception):
         self.field = field
         self.message = message
         super().__init__(self.message)
+
+
+class ApiError(Exception):
+    """Exception raised when the Google Maps API fails
+
+    Attributes:
+        status: Error status of the API call (optional)
+        message: Explanation of the exception (optional)
+    """
+
+    def __init__(self, status: str = None, message: str = None) -> None:
+        self.status = "Unknown error" if not status else status
+        self.message = "An API error occurred" if not message else message
+        super().__init__(f"{self.status}: {self.message}")
+
+
+class LocationNotFoundError(Exception):
+    """Exception raised when the Google Maps API cannot find a location
+
+    Attributes:
+        message: Explanation of the exception (optional)
+    """
+
+    def __init__(self, message: str = "Location not found") -> None:
+        self.message = message
+        super().__init__(self.message)
