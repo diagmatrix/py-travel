@@ -18,6 +18,18 @@ def meters_to_miles(meters: float) -> float:
     return meters / METERS_IN_MILE
 
 
+def estimate_distance(m_second: float, travel_seconds: int) -> float:
+    """
+    Estimates the distance travelled in a given time
+
+    :param m_second: Amount of meters travelled per second
+    :param travel_seconds: Travel time in seconds
+    :return: An estimated distance travelled in 'travel_seconds'
+    """
+
+    return m_second * travel_seconds
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # PARSER FUNCTIONS
 

@@ -4,7 +4,7 @@ from typing import Tuple, List, Dict, TypedDict
 from .client import Client
 from .exceptions import ClientNotInitializedError, TripWarning, InvalidResponseError
 from .location import Location, input_to_location
-from .utils import meters_to_miles, get_distance, get_duration
+from .utils import meters_to_miles, get_distance, get_duration, get_steps
 from .vars import (
     Stop,
     TRIP_MODES,
@@ -356,14 +356,14 @@ class Trip(Client):
     @property
     def travel_calendar(self) -> List[Tuple[date, float]]:
         """
-        Creates a list of pairs day-kms travelled from the trip.
+        Creates a list of pairs day-distance travelled from the trip.
 
         Because the Google Maps API does not provide exact data for this calculation, the distances travelled will be
         an estimation.
 
         Warning: If the trip is marked as updated, it will first calculate the trip
 
-        :return: A list of pairs day-kms travelled
+        :return: A list of pairs day-distance travelled in the unit given in the config ('metric' if not configured).
         """
 
         if self.__updated:
@@ -377,15 +377,35 @@ class Trip(Client):
 
         # Calculate kms travelled per day
         current_date = self.__departure_date
+        max_day = datetime.combine(current_date, datetime.max.time())
 
         if self.__stops:
             raise NotImplementedError
         else:
-            steps = self.__api_response.get("legs", [{}])[0].get("steps", None)
-            if not steps:
-                raise InvalidResponseError("legs[0].steps")
+            steps = get_steps(self.__api_response)
+            for step in steps:
+                meters_second = step[0] / step[1]
+                # Calculate the time after the step
+                new_date = current_date + timedelta(seconds=step[1])
 
-            raise NotImplementedError
+                # Add the distance travelled to the calendar
+                while current_date < new_date:
+                    if new_date <= max_day:
+                        calendar[current_date.date()] += (new_date - current_date).total_seconds() * meters_second
+                        current_date = new_date
+                    # Estimate the distance travelled if the step spans more than one day
+                    else:
+                        calendar[current_date.date()] += (max_day - current_date).total_seconds() * meters_second
+                        current_date = datetime.combine(current_date + timedelta(days=1), datetime.min.time())
+                        max_day = datetime.combine(current_date, datetime.max.time())
+
+        return [
+            (
+                day,
+                meters / 1000 if self.__config.get("units", "metric") == "metric" else meters_to_miles(meters)
+            )
+            for day, meters in calendar.items()
+        ]
 
     def set_response(self, response: Dict) -> None:
         """
