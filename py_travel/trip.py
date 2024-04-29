@@ -4,7 +4,7 @@ from typing import Tuple, List, Dict, TypedDict
 from .client import Client
 from .exceptions import ClientNotInitializedError, TripWarning, InvalidResponseError
 from .location import Location, input_to_location
-from .utils import meters_to_miles
+from .utils import meters_to_miles, get_distance, get_duration
 from .vars import (
     Stop,
     TRIP_MODES,
@@ -232,23 +232,11 @@ class Trip(Client):
         if self.__updated:
             self.calculate_trip()
 
+        meters = 0.0
         if self.__stops:
-            meters = 0.0
-            for stage in self.__api_response.values():
-                stage_meters = (
-                    stage.get("legs", [{}])[0].get("distance", {}).get("value", None)
-                )
-                if not stage_meters:
-                    raise InvalidResponseError("legs[0].distance.value")
-                meters += stage_meters
+            meters = sum(get_distance(stage) for stage in self.__api_response.values())
         else:
-            meters = (
-                self.__api_response.get("legs", [{}])[0]
-                .get("distance", {})
-                .get("value", None)
-            )
-            if not meters:
-                raise InvalidResponseError("legs[0].distance.value")
+            meters = get_distance(self.__api_response)
 
         return (
             meters / 1000
@@ -266,25 +254,25 @@ class Trip(Client):
         if self.__updated:
             self.calculate_trip()
 
+        seconds = 0.0
         if self.__stops:
-            seconds = 0.0
-            for stage in self.__api_response.values():
-                stage_seconds = (
-                    stage.get("legs", [{}])[0].get("duration", {}).get("value", None)
-                )
-                if not stage_seconds:
-                    raise InvalidResponseError("legs[0].duration.value")
-                seconds += stage_seconds
+            seconds = sum(get_distance(stage) for stage in self.__api_response.values())
         else:
-            seconds = (
-                self.__api_response.get("legs", [{}])[0]
-                .get("duration", {})
-                .get("value", None)
-            )
-            if not seconds:
-                raise InvalidResponseError("legs[0].duration.value")
+            seconds = get_duration(self.__api_response)
 
         return seconds
+
+    @property
+    def days(self) -> int:
+        """
+        Warning: If the trip is marked as updated, it will first calculate the trip
+        :return: Duration in days of the trip (rounded up)
+        """
+
+        if self.__updated:
+            self.calculate_trip()  # This will call update_dates()
+
+        return (self.__arrival_date.date() - self.__departure_date.date()).days + 1
 
     @property
     def stages_distances(self) -> List[float]:
@@ -366,16 +354,38 @@ class Trip(Client):
         return seconds
 
     @property
-    def days(self) -> int:
+    def travel_calendar(self) -> List[Tuple[date, float]]:
         """
+        Creates a list of pairs day-kms travelled from the trip.
+
+        Because the Google Maps API does not provide exact data for this calculation, the distances travelled will be
+        an estimation.
+
         Warning: If the trip is marked as updated, it will first calculate the trip
-        :return: Duration in days of the trip (rounded up)
+
+        :return: A list of pairs day-kms travelled
         """
 
         if self.__updated:
-            self.calculate_trip()  # This will call update_dates()
+            self.calculate_trip()
 
-        return (self.__arrival_date - self.__departure_date).days + 1
+        # Create calendar
+        calendar = {
+            self.__departure_date.date() + timedelta(days=i): 0.0
+            for i in range(self.days)
+        }
+
+        # Calculate kms travelled per day
+        current_date = self.__departure_date
+
+        if self.__stops:
+            raise NotImplementedError
+        else:
+            steps = self.__api_response.get("legs", [{}])[0].get("steps", None)
+            if not steps:
+                raise InvalidResponseError("legs[0].steps")
+
+            raise NotImplementedError
 
     def set_response(self, response: Dict) -> None:
         """
@@ -426,7 +436,7 @@ class Trip(Client):
             for index, stop in enumerate(self.__stops):
                 key = f"stage_{index}" if index > 0 else "departure"
 
-                self.__api_response[key] = self.client.directions(
+                self.__api_response[key] = self.directions(
                     origin=current_location,
                     destination=stop.location.get_data(),
                     departure_time=current_date,
@@ -437,7 +447,7 @@ class Trip(Client):
                 current_date = stop.departure_date
 
             # Call for last stage of the trip
-            self.__api_response["arrival"] = self.client.directions(
+            self.__api_response["arrival"] = self.directions(
                 origin=current_location,
                 destination=self.__destination.get_data(),
                 departure_time=current_date,
@@ -524,23 +534,3 @@ class Trip(Client):
         elif self.__arrival_date != new_arrival:
             self.__arrival_date = new_arrival
             TripWarning.update_date("arrival", "Calculated arrival does not match")
-
-    def travel_calendar(self) -> List[Tuple[date, float]]:
-        """
-        Creates a list of pairs day-kms travelled from the trip.
-
-        Because the Google Maps API does not provide exact data for this calculation, the distances travelled will be
-        an estimation.
-
-        Warning: If the trip is marked as updated, it will first calculate the trip
-
-        :return: A list of pairs day-kms travelled
-        """
-
-        if self.__updated:
-            self.calculate_trip()
-
-        if self.__stops:
-            raise NotImplementedError
-        else:
-            raise NotImplementedError
