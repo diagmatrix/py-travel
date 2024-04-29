@@ -1,4 +1,5 @@
 from typing import Dict, List, Tuple
+from datetime import datetime, date, timedelta
 
 from .exceptions import InvalidResponseError
 from .vars import METERS_IN_MILE
@@ -18,16 +19,35 @@ def meters_to_miles(meters: float) -> float:
     return meters / METERS_IN_MILE
 
 
-def estimate_distance(m_second: float, travel_seconds: int) -> float:
+def calculate_stage_steps(steps: List[Tuple[int, int]], departure_date: datetime, calendar: Dict[date, float]) ->  Dict[date, float]:
     """
-    Estimates the distance travelled in a given time
+    Calculates the distance travelled each day
 
-    :param m_second: Amount of meters travelled per second
-    :param travel_seconds: Travel time in seconds
-    :return: An estimated distance travelled in 'travel_seconds'
+    :param steps: The stage steps as a list of pairs (meters, seconds)
+    :param departure_date: The departure date of the stage
+    :param calendar: The calendar dictionary.
+    :return: The calendar with updated distances
     """
+    current_date = departure_date
+    max_day = datetime.combine(current_date, datetime.max.time())
 
-    return m_second * travel_seconds
+    for step in steps:
+        meters_second = step[0] / step[1]
+        # Calculate the time after the step
+        new_date = current_date + timedelta(seconds=step[1])
+
+        # Add the distance travelled to the calendar
+        while current_date < new_date:
+            if new_date <= max_day:
+                calendar[current_date.date()] += (new_date - current_date).total_seconds() * meters_second
+                current_date = new_date
+            # Estimate the distance travelled if the step spans more than one day
+            else:
+                calendar[current_date.date()] += (max_day - current_date).total_seconds() * meters_second
+                current_date = datetime.combine(current_date + timedelta(days=1), datetime.min.time())
+                max_day = datetime.combine(current_date, datetime.max.time())
+
+    return calendar
 
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -4,7 +4,7 @@ from typing import Tuple, List, Dict, TypedDict
 from .client import Client
 from .exceptions import ClientNotInitializedError, TripWarning, InvalidResponseError
 from .location import Location, input_to_location
-from .utils import meters_to_miles, get_distance, get_duration, get_steps
+from .utils import meters_to_miles, get_distance, get_duration, get_steps, calculate_stage_steps
 from .vars import (
     Stop,
     TRIP_MODES,
@@ -376,35 +376,23 @@ class Trip(Client):
         }
 
         # Calculate kms travelled per day
-        current_date = self.__departure_date
-        max_day = datetime.combine(current_date, datetime.max.time())
-
         if self.__stops:
-            raise NotImplementedError
+            current_date = self.__departure_date
+            for index, stage in enumerate(self.__api_response.values()):
+                steps = get_steps(stage)
+                calendar = calculate_stage_steps(steps, current_date, calendar)
+                current_date = self.__stops[index].departure_date if index < len(self.__stops) else None  # :)
+
         else:
             steps = get_steps(self.__api_response)
-            for step in steps:
-                meters_second = step[0] / step[1]
-                # Calculate the time after the step
-                new_date = current_date + timedelta(seconds=step[1])
-
-                # Add the distance travelled to the calendar
-                while current_date < new_date:
-                    if new_date <= max_day:
-                        calendar[current_date.date()] += (new_date - current_date).total_seconds() * meters_second
-                        current_date = new_date
-                    # Estimate the distance travelled if the step spans more than one day
-                    else:
-                        calendar[current_date.date()] += (max_day - current_date).total_seconds() * meters_second
-                        current_date = datetime.combine(current_date + timedelta(days=1), datetime.min.time())
-                        max_day = datetime.combine(current_date, datetime.max.time())
+            calendar = calculate_stage_steps(steps, self.__departure_date, calendar)
 
         return [
             (
                 day,
                 meters / 1000 if self.__config.get("units", "metric") == "metric" else meters_to_miles(meters)
             )
-            for day, meters in calendar.items()
+            for day, meters in calendar.items() if meters > 0
         ]
 
     def set_response(self, response: Dict) -> None:
