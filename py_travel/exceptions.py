@@ -1,3 +1,7 @@
+"""
+Exceptions and warnings raised by the package
+"""
+
 import warnings
 
 

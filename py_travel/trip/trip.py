@@ -1,11 +1,11 @@
 from datetime import datetime, date, timedelta
-from typing import Tuple, List, Dict, TypedDict
+from typing import Tuple, List, Dict, TypedDict, Any
 
-from .client import Client
-from .exceptions import ClientNotInitializedError, TripWarning, InvalidResponseError
-from .location import Location, input_to_location
-from .utils import meters_to_miles, get_distance, get_duration, get_steps, calculate_stage_steps
-from .vars import (
+from py_travel.client import DirectionsClient
+from py_travel.exceptions import ClientNotInitializedError, TripWarning, InvalidResponseError
+from py_travel.location import Location, input_to_location
+from py_travel.utils import meters_to_miles, get_distance, get_duration, get_steps, calculate_stage_steps
+from .auxiliary_types import (
     Stop,
     TRIP_MODES,
     AVOID_FEATURES,
@@ -37,11 +37,12 @@ class TripConfig(TypedDict, total=False):
     traffic_model: TRAFFIC_MODE
 
 
-class Trip(Client):
+class Trip:
     """
     Trip class
 
     Attributes:
+        client: Client object for the Google Maps API calls
         origin: Origin of the trip
         destination: Destination of the trip
         departure_date: Start date of the trip
@@ -50,6 +51,8 @@ class Trip(Client):
         updated: Boolean indicating if the object needs to call the Google Maps API to get the results
         api_response: Raw Google Maps API response
     """
+
+    client: Any = None
 
     def __init__(
         self,
@@ -140,7 +143,7 @@ class Trip(Client):
 
     @stops.setter
     def stops(
-        self, stops: List[Tuple[Tuple[float, float] | str | Location, datetime]]
+        self, stops: List[Tuple[Tuple[float, float] | str | Location, datetime]] | List[Stop]
     ) -> None:
         """
         Sets the stops for the trip
@@ -148,13 +151,17 @@ class Trip(Client):
         Warning: This will mark the trip as updated, possibly causing calls to the Google Maps API in the future.
 
         :param stops: A list of tuples containing the stop location (either a tuple containing the coordinates, the
-            address or a Location object) and the departure date from the stop
+            address or a Location object) and the departure date from the stop, or a list of Stop objects
         """
 
-        self.__stops = [
-            Stop(input_to_location(loc), dep_date) for loc, dep_date in stops
-        ]
-        self.__stops.sort(key=lambda stop: stop.departure_date)
+        self.__stops = []
+        for stop in stops:
+            if isinstance(stop, Stop):
+                self.__stops.append(stop)
+            else:
+                self.__stops.append(Stop(input_to_location(stop[0]), stop[1]))
+
+        self.__stops.sort(key=lambda s: s.departure_date)
         self.__updated = True
 
     @property
@@ -232,7 +239,6 @@ class Trip(Client):
         if self.__updated:
             self.calculate_trip()
 
-        meters = 0.0
         if self.__stops:
             meters = sum(get_distance(stage) for stage in self.__api_response.values())
         else:
@@ -254,7 +260,6 @@ class Trip(Client):
         if self.__updated:
             self.calculate_trip()
 
-        seconds = 0.0
         if self.__stops:
             seconds = sum(get_duration(stage) for stage in self.__api_response.values())
         else:
@@ -354,7 +359,7 @@ class Trip(Client):
         return seconds
 
     @property
-    def travel_calendar(self) -> List[Tuple[date, float]]:
+    def trip_calendar(self) -> List[Tuple[date, float]]:
         """
         Creates a list of pairs day-distance travelled from the trip.
 
@@ -395,14 +400,17 @@ class Trip(Client):
             for day, meters in calendar.items() if meters > 0
         ]
 
-    def set_response(self, response: Dict) -> None:
+    @classmethod
+    def set_client(cls, client: Any) -> None:
         """
-        Set the response from the Google Maps API. USE ONLY FOR TESTS
+        Initializes the client for the directions request
 
-        TODO: Remove this
+        :param client: A client object. Must contain a method called 'directions' that returns the raw Google Maps
+            Directions API response and takes the following parameters: origin, destination, mode, avoid, units,
+            departure_time, arrival_time, transit_mode, transit_routing_preference and traffic_model
         """
-        self.__api_response = response
-        self.__updated = False
+
+        cls.client = client
 
     def calculate_trip(self, trip_config: TripConfig = None) -> Dict:
         """
@@ -444,7 +452,7 @@ class Trip(Client):
             for index, stop in enumerate(self.__stops):
                 key = f"stage_{index}" if index > 0 else "departure"
 
-                self.__api_response[key] = self.directions(
+                self.__api_response[key] = self.client.directions(
                     origin=current_location,
                     destination=stop.location.get_data(),
                     departure_time=current_date,
@@ -455,7 +463,7 @@ class Trip(Client):
                 current_date = stop.departure_date
 
             # Call for last stage of the trip
-            self.__api_response["arrival"] = self.directions(
+            self.__api_response["arrival"] = self.client.directions(
                 origin=current_location,
                 destination=self.__destination.get_data(),
                 departure_time=current_date,
