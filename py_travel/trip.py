@@ -256,7 +256,7 @@ class Trip(Client):
 
         seconds = 0.0
         if self.__stops:
-            seconds = sum(get_distance(stage) for stage in self.__api_response.values())
+            seconds = sum(get_duration(stage) for stage in self.__api_response.values())
         else:
             seconds = get_duration(self.__api_response)
 

@@ -1,7 +1,6 @@
 from .trip import Trip, TripConfig
 from .location import Location
 from .client import Client
-from .exceptions import ClientNotInitializedError
 
 
 def init_client(api_key: str) -> None:
@@ -20,6 +19,5 @@ __all__ = [
     "Trip",
     "Location",
     "TripConfig",
-    "ClientNotInitializedError",
     "Client",
 ]

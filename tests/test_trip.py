@@ -2,7 +2,11 @@ import pytest
 from datetime import datetime
 
 from py_travel import Location, Trip
+from fixtures import basic_trip, trip_stop
+from mock_client import TEST_METERS, TEST_SECONDS
 
+
+TEST_KMS = TEST_METERS / 1000
 
 class TestTrip:
     @pytest.mark.parametrize(
@@ -32,29 +36,29 @@ class TestTrip:
         """
         Test that the distance calculation works
         """
-        assert basic_trip.distance == 1
-        assert trip_stop.distance == 2
+        assert basic_trip.distance == TEST_KMS
+        assert trip_stop.distance == TEST_KMS * 2
 
     def test_distances(self, basic_trip, trip_stop):
         """
         Test that the partial distances calculation works
         """
-        assert basic_trip.stages_distances == [1]
-        assert trip_stop.stages_distances == [1, 1]
+        assert basic_trip.stages_distances == [TEST_KMS]
+        assert trip_stop.stages_distances == [TEST_KMS, TEST_KMS]
 
     def test_travel_time(self, basic_trip, trip_stop):
         """
         Test that the duration calculation works
         """
-        assert basic_trip.seconds == 60
-        assert trip_stop.seconds == 120
+        assert basic_trip.seconds == TEST_SECONDS
+        assert trip_stop.seconds == TEST_SECONDS * 2
 
     def test_travel_times(self, basic_trip, trip_stop):
         """
         Test that the partial duration calculation works
         """
-        assert basic_trip.stages_seconds == [60]
-        assert trip_stop.stages_seconds == [60, 60]
+        assert basic_trip.stages_seconds == [TEST_SECONDS]
+        assert trip_stop.stages_seconds == [TEST_SECONDS, TEST_SECONDS]
 
     @pytest.mark.parametrize(
         ("departure", "arrival"),

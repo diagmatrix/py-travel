@@ -4,7 +4,7 @@ import pytest
 
 from py_travel import Client, Trip
 
-from test_client import TestClient
+from mock_client import TestClient
 
 # Set the Google Maps API Client to the mock
 Client.client = TestClient("a")
