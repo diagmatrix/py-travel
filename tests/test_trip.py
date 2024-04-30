@@ -1,7 +1,8 @@
 import pytest
 from datetime import datetime
 
-from py_travel import Location, Trip
+from py_travel import Location
+from py_travel.trip import Trip
 from fixtures import basic_trip, trip_stop
 from mock_client import TEST_METERS, TEST_SECONDS
 

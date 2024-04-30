@@ -2,12 +2,12 @@ from datetime import datetime
 
 import pytest
 
-from py_travel import Client, Trip
-
+from py_travel.trip import Trip
 from mock_client import TestClient
 
 # Set the Google Maps API Client to the mock
-Client.client = TestClient("a")
+TC = TestClient("a")
+Trip.set_client(TC)
 
 
 @pytest.fixture
