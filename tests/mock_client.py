@@ -1,9 +1,22 @@
 from typing import List, TYPE_CHECKING, Dict
 
-from py_travel import ClientNotInitializedError
-
 if TYPE_CHECKING:  # pragma: no cover
     from datetime import datetime
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Mock constants
+TEST_METERS = 1800
+TEST_SECONDS = 3600
+MOCK_N_STEPS = 10
+MOCK_DISTANCE = {"distance": {"value": TEST_METERS}}
+MOCK_TIME = {"duration": {"value": TEST_SECONDS}}
+MOCK_STEP = {**MOCK_DISTANCE, **MOCK_TIME}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Mock classes
+class ClientNotInitializedError(Exception):
+    pass
 
 
 class TestClient:
@@ -43,8 +56,7 @@ class TestClient:
         if not self.key:
             raise ClientNotInitializedError()
 
-        return [{
-            "legs": [{"distance": {"value": 1000}, "duration": {"value": 60}}],
+        response = {
             "input": {
                 "origin": origin,
                 "destination": destination,
@@ -57,4 +69,11 @@ class TestClient:
                 "transit_routing_preference": transit_routing_preference,
                 "traffic_model": traffic_model,
             },
-        }]
+            "legs": [{
+                **MOCK_DISTANCE,
+                **MOCK_TIME,
+                "steps": [{**MOCK_STEP}] * MOCK_N_STEPS
+            }]
+        }
+
+        return [response]

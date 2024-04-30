@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 from typing import Tuple, List, Dict, TypedDict
 
+from .client import Client
 from .exceptions import ClientNotInitializedError, TripWarning, InvalidResponseError
 from .location import Location, input_to_location
-from .utils import meters_to_miles
+from .utils import meters_to_miles, get_distance, get_duration, get_steps, calculate_stage_steps
 from .vars import (
     Stop,
     TRIP_MODES,
@@ -13,7 +14,6 @@ from .vars import (
     TRAFFIC_MODE,
     METRIC_SYSTEMS,
 )
-from .client import Client
 
 
 class TripConfig(TypedDict, total=False):
@@ -232,23 +232,11 @@ class Trip(Client):
         if self.__updated:
             self.calculate_trip()
 
+        meters = 0.0
         if self.__stops:
-            meters = 0.0
-            for stage in self.__api_response.values():
-                stage_meters = (
-                    stage.get("legs", [{}])[0].get("distance", {}).get("value", None)
-                )
-                if not stage_meters:
-                    raise InvalidResponseError("legs[0].distance.value")
-                meters += stage_meters
+            meters = sum(get_distance(stage) for stage in self.__api_response.values())
         else:
-            meters = (
-                self.__api_response.get("legs", [{}])[0]
-                .get("distance", {})
-                .get("value", None)
-            )
-            if not meters:
-                raise InvalidResponseError("legs[0].distance.value")
+            meters = get_distance(self.__api_response)
 
         return (
             meters / 1000
@@ -257,37 +245,37 @@ class Trip(Client):
         )
 
     @property
-    def travel_time(self) -> int:
+    def seconds(self) -> int:
         """
-         Warning: If the trip is marked as updated, it will first calculate the trip
+        Warning: If the trip is marked as updated, it will first calculate the trip
         :return: The amount of seconds travelled in the trip
         """
 
         if self.__updated:
             self.calculate_trip()
 
+        seconds = 0.0
         if self.__stops:
-            seconds = 0.0
-            for stage in self.__api_response.values():
-                stage_seconds = (
-                    stage.get("legs", [{}])[0].get("duration", {}).get("value", None)
-                )
-                if not stage_seconds:
-                    raise InvalidResponseError("legs[0].duration.value")
-                seconds += stage_seconds
+            seconds = sum(get_duration(stage) for stage in self.__api_response.values())
         else:
-            seconds = (
-                self.__api_response.get("legs", [{}])[0]
-                .get("duration", {})
-                .get("value", None)
-            )
-            if not seconds:
-                raise InvalidResponseError("legs[0].duration.value")
+            seconds = get_duration(self.__api_response)
 
         return seconds
 
     @property
-    def distances(self) -> List[float]:
+    def days(self) -> int:
+        """
+        Warning: If the trip is marked as updated, it will first calculate the trip
+        :return: Duration in days of the trip (rounded up)
+        """
+
+        if self.__updated:
+            self.calculate_trip()  # This will call update_dates()
+
+        return (self.__arrival_date.date() - self.__departure_date.date()).days + 1
+
+    @property
+    def stages_distances(self) -> List[float]:
         """
         Returns the distances between the locations of the trip in a list starting from origin - 1st stop and ending
         with last stop - destination. If the trip does not contain stops, the list will be of size 1.
@@ -330,7 +318,7 @@ class Trip(Client):
         ]
 
     @property
-    def travel_times(self) -> List[int]:
+    def stages_seconds(self) -> List[int]:
         """
         Returns the seconds travelled between the locations of the trip in a list starting from origin - 1st stop and
         ending last stop - destination. If the trip does not contain stops, the list will be of size 1.
@@ -364,6 +352,48 @@ class Trip(Client):
             seconds.append(seconds_trip)
 
         return seconds
+
+    @property
+    def travel_calendar(self) -> List[Tuple[date, float]]:
+        """
+        Creates a list of pairs day-distance travelled from the trip.
+
+        Because the Google Maps API does not provide exact data for this calculation, the distances travelled will be
+        an estimation.
+
+        Warning: If the trip is marked as updated, it will first calculate the trip
+
+        :return: A list of pairs day-distance travelled in the unit given in the config ('metric' if not configured).
+        """
+
+        if self.__updated:
+            self.calculate_trip()
+
+        # Create calendar
+        calendar = {
+            self.__departure_date.date() + timedelta(days=i): 0.0
+            for i in range(self.days)
+        }
+
+        # Calculate kms travelled per day
+        if self.__stops:
+            current_date = self.__departure_date
+            for index, stage in enumerate(self.__api_response.values()):
+                steps = get_steps(stage)
+                calendar = calculate_stage_steps(steps, current_date, calendar)
+                current_date = self.__stops[index].departure_date if index < len(self.__stops) else None  # :)
+
+        else:
+            steps = get_steps(self.__api_response)
+            calendar = calculate_stage_steps(steps, self.__departure_date, calendar)
+
+        return [
+            (
+                day,
+                meters / 1000 if self.__config.get("units", "metric") == "metric" else meters_to_miles(meters)
+            )
+            for day, meters in calendar.items() if meters > 0
+        ]
 
     def set_response(self, response: Dict) -> None:
         """
@@ -414,7 +444,7 @@ class Trip(Client):
             for index, stop in enumerate(self.__stops):
                 key = f"stage_{index}" if index > 0 else "departure"
 
-                self.__api_response[key] = self.client.directions(
+                self.__api_response[key] = self.directions(
                     origin=current_location,
                     destination=stop.location.get_data(),
                     departure_time=current_date,
@@ -425,7 +455,7 @@ class Trip(Client):
                 current_date = stop.departure_date
 
             # Call for last stage of the trip
-            self.__api_response["arrival"] = self.client.directions(
+            self.__api_response["arrival"] = self.directions(
                 origin=current_location,
                 destination=self.__destination.get_data(),
                 departure_time=current_date,
@@ -468,18 +498,22 @@ class Trip(Client):
         if self.__updated:
             self.calculate_trip()
 
-        travel_times = self.travel_times
+        travel_times = self.stages_seconds
 
         # Check departure date
         if not self.__departure_date and not self.__arrival_date:
             self.__departure_date = datetime.now()
-            TripWarning.update_date('departure', 'No departure date provided')
+            TripWarning.update_date("departure", "No departure date provided")
         elif not self.__departure_date:
             if not self.__stops:
-                self.__departure_date = self.__arrival_date - timedelta(seconds=travel_times[0])
+                self.__departure_date = self.__arrival_date - timedelta(
+                    seconds=travel_times[0]
+                )
             else:
-                self.__departure_date = self.__stops[0].departure_date - timedelta(seconds=travel_times[0])
-            TripWarning.update_date('departure', 'No departure date provided')
+                self.__departure_date = self.__stops[0].departure_date - timedelta(
+                    seconds=travel_times[0]
+                )
+            TripWarning.update_date("departure", "No departure date provided")
 
         # Check stop dates
         if self.__stops:
@@ -487,8 +521,10 @@ class Trip(Client):
             for index, stop in enumerate(self.__stops):
                 stop_arrival = current_date + timedelta(seconds=travel_times[index])
                 if stop.departure_date < stop_arrival:
-                    TripWarning.update_date('stop', 'Calculated arrival before departure date')
-                    self.__stops[index] = Stop(stop.location,stop_arrival)
+                    TripWarning.update_date(
+                        "stop", "Calculated arrival before departure date"
+                    )
+                    self.__stops[index] = Stop(stop.location, stop_arrival)
 
                 current_date = stop.departure_date
 
@@ -496,11 +532,13 @@ class Trip(Client):
         if not self.__stops:
             new_arrival = self.__departure_date + timedelta(seconds=travel_times[0])
         else:
-            new_arrival = self.__stops[-1].departure_date - timedelta(seconds=travel_times[-1])
+            new_arrival = self.__stops[-1].departure_date + timedelta(
+                seconds=travel_times[-1]
+            )
 
         if not self.__arrival_date:
             self.__arrival_date = new_arrival
-            TripWarning.update_date('arrival', 'No arrival date provided')
+            TripWarning.update_date("arrival", "No arrival date provided")
         elif self.__arrival_date != new_arrival:
             self.__arrival_date = new_arrival
-            TripWarning.update_date('arrival', 'Calculated arrival does not match')
+            TripWarning.update_date("arrival", "Calculated arrival does not match")
