@@ -1,8 +1,9 @@
 import pytest
 from datetime import datetime
 
-from py_travel import Location, Trip
-from fixtures import basic_trip, trip_stop
+from py_travel import Location
+from py_travel.trip import Trip
+from fixtures import basic_trip, trip_stop, trip_stops
 from mock_client import TEST_METERS, TEST_SECONDS
 
 
@@ -60,6 +61,14 @@ class TestTrip:
         assert basic_trip.stages_seconds == [TEST_SECONDS]
         assert trip_stop.stages_seconds == [TEST_SECONDS, TEST_SECONDS]
 
+    def test_days(self, basic_trip, trip_stop, trip_stops):
+        """
+        Test that the days calculation works
+        """
+        assert basic_trip.days == 1
+        assert trip_stop.days == 1
+        assert trip_stops.days == 4
+
     @pytest.mark.parametrize(
         ("departure", "arrival"),
         [
@@ -98,3 +107,23 @@ class TestTrip:
         trip_stop.calculate_trip()
 
         assert trip_stop.stops[0].departure_date != stop_date
+
+    def test_calendar_no_stops(self, basic_trip):
+        """
+        Test that the trip calendar works with no stops
+        """
+
+        trip_calendar = basic_trip.trip_calendar
+
+        assert len(trip_calendar) == 1
+        assert trip_calendar[0][0] == datetime.now().date()
+
+    def test_calendar_stops(self, trip_stops):
+        """
+        Test that the trip calendar works with no stops
+        """
+
+        trip_calendar = trip_stops.trip_calendar
+
+        assert len(trip_calendar) == 4
+        assert trip_calendar[0][0] == trip_stops.departure_date.date()

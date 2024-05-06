@@ -1,3 +1,16 @@
+"""
+Utils functions used throughout the package. Divided by auxiliary functions and JSON parsing functions.
+
+Auxiliary functions:
+    meters_to_miles: Converts meters to miles.
+    calculate_stage_steps: Calculates a portion of a trip calendar (used by Trip class).
+
+Parser functions:
+    get_distance: Parses a Google Maps Directions API response to retrieve the distance value.
+    get_duration: Parses a Google Maps Directions API response to retrieve the duration value.
+    get_steps: Parses a Google Maps Directions API response to retrieve the trip steps list.
+"""
+
 from typing import Dict, List, Tuple
 from datetime import datetime, date, timedelta
 

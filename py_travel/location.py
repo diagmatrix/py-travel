@@ -1,3 +1,13 @@
+"""
+Location class.
+
+Classes:
+    Location: Represents a location in the globe.
+
+Functions:
+    input_to_location: Transforms a coordinates tuple or an address into a Location object.
+"""
+
 from dataclasses import dataclass
 from typing import Tuple
 
