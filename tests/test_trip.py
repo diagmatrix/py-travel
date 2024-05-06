@@ -1,12 +1,13 @@
 import pytest
 from datetime import datetime
 
-from py_travel import Location
+from py_travel.location import Location
 from py_travel.trip import Trip
 from mock_client import TEST_METERS, TEST_SECONDS
 
 
 TEST_KMS = TEST_METERS / 1000
+
 
 class TestTrip:
     @pytest.mark.parametrize(
