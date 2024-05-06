@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import pytest
 
 from py_travel.trip import Trip
-from mock_client import TestClient
+from tests.mock_client import TestClient
 
 # Set the Google Maps API Client to the mock
 TC = TestClient("a")
