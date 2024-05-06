@@ -2,7 +2,17 @@
 
 This is a Python library to use in conjunction with the 
 [Google Maps API](https://github.com/googlemaps/google-maps-services-python) (at least for now) in order to plan trips
-and much more!
+and much more! It tries to bring a less JSON-oriented way of using the API.
+
+## Roadmap
+
+ 1. Distance and timing calculations for trips. ✔️
+ 2. Geocoding and decoding locations in the globe.
+ 3. Support for static map images.
+ 4. Drop `googlemaps` dependency.
+ 5. Investigate other APIs to use.
+ 6. ...
+
 
 ## Getting started
 
