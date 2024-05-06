@@ -1,5 +1,11 @@
 # Python travelling library
 
+![GitHub License](https://img.shields.io/github/license/diagmatrix/py-travel)
+![Python ^3.10](https://img.shields.io/badge/Python-3.10%2B-blue)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/diagmatrix/py-travel/commit.yml)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/diagmatrix/py-travel)
+
+
 This is a Python library to use in conjunction with the 
 [Google Maps API](https://github.com/googlemaps/google-maps-services-python) (at least for now) in order to plan trips
 and much more! It tries to bring a less JSON-oriented way of using the API.
