@@ -2,7 +2,7 @@ from typing import Tuple, TYPE_CHECKING, List, Dict
 from googlemaps.exceptions import ApiError as GoogleMapsApiError
 
 from py_travel.client import Client
-from py_travel.exceptions import LocationNotFoundError, ApiError
+from py_travel.exceptions import LocationNotFoundError, ApiError, InvalidRequestError
 
 if TYPE_CHECKING:  # pragma: no cover
     from datetime import datetime
@@ -51,6 +51,8 @@ class DirectionsClient(Client):
         except GoogleMapsApiError as e:
             if e.status == "NOT_FOUND":
                 raise LocationNotFoundError() from None
+            elif e.status == "INVALID_REQUEST":
+                raise InvalidRequestError(e.message) from None
             else:
                 raise ApiError(e.status, e.message) from None
 

@@ -26,12 +26,9 @@ Exceptions:
 
     LocationNotFoundError: Raised when the Google Maps API cannot find a location (Client subclasses).
 
-"""
+    InvalidRequestError: Raised when an invalid request is sent to the Google Maps API (Client subclasses).
 
-import py_travel.client
-import py_travel.trip
-import py_travel.exceptions
-from py_travel.location import Location
+"""
 
 
 def init_clients(api_key: str) -> None:
@@ -40,8 +37,10 @@ def init_clients(api_key: str) -> None:
 
     :param api_key: Google Maps API key
     """
+    from py_travel.client import DirectionsClient
+    from py_travel.trip import Trip
 
     # Create clients
-    directions_client = client.DirectionsClient(api_key)
+    directions_client = DirectionsClient(api_key)
 
-    trip.Trip.set_client(directions_client)
+    Trip.set_client(directions_client)

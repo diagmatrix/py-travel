@@ -1,7 +1,6 @@
 from datetime import datetime, date, timedelta
 from typing import Tuple, List, Dict, TypedDict, Any
 
-from py_travel.client import DirectionsClient
 from py_travel.exceptions import ClientNotInitializedError, TripWarning, InvalidResponseError
 from py_travel.location import Location, input_to_location
 from py_travel.utils import meters_to_miles, get_distance, get_duration, get_steps, calculate_stage_steps

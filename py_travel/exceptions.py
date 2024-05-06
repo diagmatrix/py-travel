@@ -85,3 +85,14 @@ class LocationNotFoundError(Exception):
     def __init__(self, message: str = "Location not found") -> None:
         self.message = message
         super().__init__(self.message)
+
+
+class InvalidRequestError(Exception):
+    """Exception raised when an invalid request is sent to the Google Maps API
+    Attributes:
+        message: Explanation of the exception (optional)
+    """
+
+    def __init__(self, message: str = "Request was invalid, check parameters") -> None:
+        self.message = message
+        super().__init__(f"Invalid API request: {self.message}")
