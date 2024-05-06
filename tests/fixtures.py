@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -26,7 +26,7 @@ def basic_trip() -> Trip:
 @pytest.fixture
 def trip_stop() -> Trip:
     """
-    Create a Trip object with one stop and no dates
+    Create a Trip object with one stop
     """
     return Trip(
         origin="Test Origin",
@@ -34,4 +34,21 @@ def trip_stop() -> Trip:
         departure_date=datetime.now(),
         arrival_date=datetime.now(),
         stops=[("Test Stop 1", datetime.now())],
+    )
+
+
+@pytest.fixture
+def trip_stops() -> Trip:
+    """
+    Create a Trip object with multiple stops
+    """
+    return Trip(
+        origin="Test Origin",
+        destination="Test Destination",
+        departure_date=datetime(year=1999, month=1, day=1),
+        stops=[
+            ("Test Stop 1", datetime(year=1999, month=1, day=1) + timedelta(days=1)),
+            ("Test Stop 2", datetime(year=1999, month=1, day=1) + timedelta(days=2)),
+            ("Test Stop 3", datetime(year=1999, month=1, day=1) + timedelta(days=3))
+        ],
     )
