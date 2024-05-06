@@ -52,6 +52,7 @@ def calculate_stage_steps(steps: List[Tuple[int, int]], departure_date: datetime
         # Add the distance travelled to the calendar
         while current_date < new_date:
             if new_date <= max_day:
+                calendar.setdefault(current_date.date(), 0)  # If the key doesn't exist, create it and initialize to 0
                 calendar[current_date.date()] += (new_date - current_date).total_seconds() * meters_second
                 current_date = new_date
             # Estimate the distance travelled if the step spans more than one day

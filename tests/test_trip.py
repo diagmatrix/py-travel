@@ -116,7 +116,7 @@ class TestTrip:
         trip_calendar = basic_trip.trip_calendar
 
         assert len(trip_calendar) == 1
-        assert trip_calendar[0][0] == datetime.now().date()
+        assert trip_calendar[0][0] == basic_trip.departure_date.date()
 
     def test_calendar_stops(self, trip_stops):
         """

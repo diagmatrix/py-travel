@@ -18,8 +18,8 @@ def basic_trip() -> Trip:
     return Trip(
         origin="Test Origin",
         destination="Test Destination",
-        departure_date=datetime.now(),
-        arrival_date=datetime.now(),
+        departure_date=datetime(year=1999, month=1, day=1),
+        arrival_date=datetime(year=1999, month=1, day=1),
     )
 
 
@@ -31,9 +31,9 @@ def trip_stop() -> Trip:
     return Trip(
         origin="Test Origin",
         destination="Test Destination",
-        departure_date=datetime.now(),
-        arrival_date=datetime.now(),
-        stops=[("Test Stop 1", datetime.now())],
+        departure_date=datetime(year=1999, month=1, day=1),
+        arrival_date=datetime(year=1999, month=1, day=1),
+        stops=[("Test Stop 1", datetime(year=1999, month=1, day=1))],
     )
 
 
