@@ -1,1 +1,82 @@
-# py-travel
+# Python travelling library
+
+This is a Python library to use in conjunction with the 
+[Google Maps API](https://github.com/googlemaps/google-maps-services-python) (at least for now) in order to plan trips
+and much more!
+
+## Getting started
+
+These instructions will get you a copy of the project up and running on your local machine for development and testing
+purposes.
+
+### Prerequisites
+
+You will need the following:
+
+ - Python >= 3.10
+ - A Google Maps API key (for testing outside the testing environment)
+
+### Installing
+
+For a local installation, just clone this repository inside the parent directory of your project.
+
+````bash
+git clone https://github.com/diagmatrix/py-travel.git
+git checkout main
+````
+
+Then install the dependencies of **py-travel**.
+
+````bash
+pip install -r requirements.txt
+````
+
+And there you have it! You can now use this library freely.
+
+## Usage
+
+There are currently two ways of using the classes provided in the package: by using the built-in
+Google Maps API clients or by using the `googlemaps` client directly. The first method will initialize an API client for
+each of the classes of **py-travel** that use them, while the second approach will give you more control on which ones
+can access it.
+
+### Using built-in client
+
+````python
+from py_travel import init_clients
+from py_travel.trip import Trip
+
+init_clients(api_key="<API KEY>")  # Initialize all API clients
+my_trip = Trip(origin=(39.25, -4.47), destination="Aveiro, Portugal", config={'mode': 'walking'})
+
+# Get the kms between the points
+kms = my_trip.distance
+````
+
+### Using `googlemaps` directly
+
+````python
+from py_travel.trip import Trip
+import googlemaps
+
+cli = googlemaps.Client(key="<API KEY>")
+Trip.set_client(cli)  # Initialize client for the trip class
+my_trip = Trip(origin=(39.25, -4.47), destination="Aveiro, Portugal", config={'mode': 'walking'})
+
+# Get the kms between the points
+kms = my_trip.distance
+````
+
+## Running the tests
+
+In order to run the tests you will first need to install the python package `pytest`. Then, place yourself in the parent 
+branch of the repository and run the following command:
+
+````bash
+pytest
+````
+For linting tests, this project uses the default `ruff` configuration.
+
+## Contributing
+
+Work in progress

@@ -532,8 +532,9 @@ class Trip:
                         "stop", "Calculated arrival before departure date"
                     )
                     self.__stops[index] = Stop(stop.location, stop_arrival)
-
-                current_date = stop.departure_date
+                    current_date = stop_arrival
+                else:
+                    current_date = stop.departure_date
 
         # Check arrival date
         if not self.__stops:
