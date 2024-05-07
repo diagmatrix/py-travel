@@ -19,8 +19,8 @@ class TestTrip:
             {"origin": "Test Origin", "destination": "Test Destination"},
             # Location object
             {
-                "origin": Location(0.0, 0.0, "Test Origin"),
-                "destination": Location(0.0, 0.0, "Test Destination"),
+                "origin": Location((0.0, 0.0), "Test Origin"),
+                "destination": Location((0.0, 0.0), "Test Destination"),
             },
         ],
     )
@@ -89,7 +89,7 @@ class TestTrip:
 
         old_departure = departure
         old_arrival = arrival
-        trip = Trip("", "", departure_date=departure, arrival_date=arrival)
+        trip = Trip("Test Origin", "Test Destination", departure_date=departure, arrival_date=arrival)
         trip.calculate_trip()
 
         if not departure:
