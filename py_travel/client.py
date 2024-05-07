@@ -50,6 +50,9 @@ class Client:
         https://googlemaps.github.io/google-maps-services-python/docs/index.html#googlemaps.Client.directions
 
         :return: The Google Maps Directions API response
+        :raises LocationNotFoundError: If the origin or destination are not found
+        :raises InvalidRequestError: If the request is invalid
+        :raises ApiError: If the API returned an error
         """
 
         try:
@@ -75,3 +78,22 @@ class Client:
 
         return response
 
+    def geocode(self, address: str = None, bounds: str | Dict = None) -> Dict:
+        """
+        Geocode API method
+
+        Information about the parameters can be found here:
+        https://googlemaps.github.io/google-maps-services-python/docs/index.html#googlemaps.Client.geocode
+
+        :return: The Google Maps Geocode API response
+        """
+
+        try:
+            response = self.__client.geocode(
+                address=address,
+                bounds=bounds
+            )
+        except GoogleMapsApiError as e:
+            raise ApiError(e.status, e.message) from None
+
+        return response

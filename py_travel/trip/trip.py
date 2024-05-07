@@ -414,7 +414,7 @@ class Trip:
 
         # Make calls to the API
         if self.__stops:
-            current_location = self.__origin.get_data()
+            current_location = self.__origin.coords_or_address()
             current_date = (
                 self.__departure_date if self.__departure_date else datetime.now()
             )  # Fixes HTTP 400 error
@@ -425,18 +425,18 @@ class Trip:
 
                 self.__api_response[key] = self.client.directions(
                     origin=current_location,
-                    destination=stop.location.get_data(),
+                    destination=stop.location.coords_or_address(),
                     departure_time=current_date,
                     **self.__config,
                 )[0]
 
-                current_location = stop.location.get_data()
+                current_location = stop.location.coords_or_address()
                 current_date = stop.departure_date
 
             # Call for last stage of the trip
             self.__api_response["arrival"] = self.client.directions(
                 origin=current_location,
-                destination=self.__destination.get_data(),
+                destination=self.__destination.coords_or_address(),
                 departure_time=current_date,
                 **self.__config,
             )[0]
@@ -456,8 +456,8 @@ class Trip:
                 }  # Fixes HTTP 400 error
 
             self.__api_response = self.client.directions(
-                origin=self.__origin.get_data(),
-                destination=self.__destination.get_data(),
+                origin=self.__origin.coords_or_address(),
+                destination=self.__destination.coords_or_address(),
                 **date_argument,
                 **self.__config,
             )[0]

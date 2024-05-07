@@ -34,6 +34,8 @@ class TravelWarnings:
         warnings.warn(warn_message, UserWarning, stacklevel=3)
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+# General exceptions
 class ClientNotInitializedError(Exception):
     """Exception raised when the Google Maps API client has not been initialized
 
@@ -61,6 +63,22 @@ class InvalidResponseError(Exception):
         super().__init__(self.message)
 
 
+class MissingArgumentError(Exception):
+    """Exception raised when a field is missing from a function.
+
+    Attributes:
+        field: Missing field
+        message: Explanation of the exception (optional)
+    """
+
+    def __init__(self, field: str, message: str = "Missing argument") -> None:
+        self.field = field
+        self.message = message
+        super().__init__(f"{self.field}: {self.message}")
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Client exceptions
 class ApiError(Exception):
     """Exception raised when the Google Maps API fails
 

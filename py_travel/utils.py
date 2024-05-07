@@ -70,13 +70,14 @@ def init_clients(api_key: str) -> None:
 
     :param api_key: Google Maps API key
     """
-    from py_travel import Client
+    from py_travel import Client, Location
     from py_travel.trip import Trip
 
-    # Create clients
-    directions_client = Client(api_key)
+    client = Client(api_key)
 
-    Trip.set_client(directions_client)
+    # Set clients
+    Trip.set_client(client)
+    Location.set_client(client)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # PARSER FUNCTIONS
