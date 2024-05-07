@@ -5,7 +5,7 @@ Exceptions and warnings raised by the package
 import warnings
 
 
-class TripWarning:
+class TravelWarnings:
     """
     Class wrapping all warnings raised by the Trip class
     """

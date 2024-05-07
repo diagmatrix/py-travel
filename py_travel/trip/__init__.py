@@ -11,7 +11,8 @@ Types:
 """
 
 from .trip import Trip
-from .auxiliary_types import TripConfig, Stop
+from .trip_config import TripConfig
+from .stop import Stop
 
 
 __all__ = ['Trip', 'TripConfig', 'Stop']

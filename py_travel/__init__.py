@@ -5,14 +5,14 @@ This package tries to make it easier to use the Google Maps API for trip plannin
 working with the API.
 
 Modules:
-    client: Provides some wrappers for the googlemaps python library.
-
     trip: Provides the tools and classes used to interact with the Google Maps API for trip planning.
 
 Classes:
+    Client: Provides a wrapper for the googlemaps client class.
+
     Location: Represents a location in the globe. Contains the coordinates and the address.
 
-    TripWarning: Collection of warnings raised by the trip class.
+    TravelWarnings: Collection of warnings raised by the trip class.
 
 Functions:
     init_clients: Initializes all the library classes' clients with the ones provided by this library.
@@ -30,17 +30,22 @@ Exceptions:
 
 """
 
+# Export client
+from .client import Client
 
-def init_clients(api_key: str) -> None:
-    """
-    Initializes the library provided clients for all classes that use them.
+# Export exceptions
+from .exceptions import (
+    TravelWarnings, ClientNotInitializedError, InvalidResponseError, InvalidRequestError, ApiError,
+    LocationNotFoundError
+)
 
-    :param api_key: Google Maps API key
-    """
-    from py_travel.client import DirectionsClient
-    from py_travel.trip import Trip
+# Export location
+from .location import Location
 
-    # Create clients
-    directions_client = DirectionsClient(api_key)
+# Export init_clients
+from .utils import init_clients
 
-    Trip.set_client(directions_client)
+__all__ = [
+    "TravelWarnings", "ClientNotInitializedError", "InvalidResponseError", "InvalidRequestError", "ApiError",
+    "LocationNotFoundError", "Client", "Location", "init_clients"
+]

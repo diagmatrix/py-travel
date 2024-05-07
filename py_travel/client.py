@@ -1,30 +1,47 @@
 from typing import Tuple, TYPE_CHECKING, List, Dict
 from googlemaps.exceptions import ApiError as GoogleMapsApiError
-
-from py_travel.client import Client
+from googlemaps.client import Client as GoogleMapsClient
 from py_travel.exceptions import LocationNotFoundError, ApiError, InvalidRequestError
 
 if TYPE_CHECKING:  # pragma: no cover
     from datetime import datetime
 
 
-class DirectionsClient(Client):
+class Client:
     """
-    Google Maps Directions API client
+    Base Client Class for all Google Maps API clients
+
+    Attributes:
+        client: Google Maps API client (class attribute)
     """
+    def __init__(self, api_key: str) -> None:
+        self.__client = GoogleMapsClient(key=api_key)
+
+    @property
+    def client(self) -> GoogleMapsClient:
+        return self.__client
+
+    @client.setter
+    def client(self, api_key: str) -> None:
+        """
+        Set Google Maps Client
+
+        :param api_key: API key for Google Maps
+        """
+        self.client = GoogleMapsClient(key=api_key)
 
     def directions(
-        self,
-        origin: Tuple[float, float] | str,
-        destination: Tuple[float, float] | str,
-        departure_time: 'datetime' = None,
-        arrival_time: 'datetime' = None,
-        mode: str = None,
-        avoid: str = None,
-        units: str = None,
-        transit_mode: List[str] | str = None,
-        transit_routing_preference: str = None,
-        traffic_model: str = None
+            self,
+            origin: Tuple[float, float] | str,
+            destination: Tuple[float, float] | str,
+            departure_time: 'datetime' = None,
+            arrival_time: 'datetime' = None,
+            mode: str = None,
+            avoid: str = None,
+            units: str = None,
+            transit_mode: List[str] | str = None,
+            transit_routing_preference: str = None,
+            traffic_model: str = None
     ) -> Dict:
         """
         Directions API method
@@ -36,7 +53,7 @@ class DirectionsClient(Client):
         """
 
         try:
-            response = self.client.directions(
+            response = self.__client.directions(
                 origin=origin,
                 destination=destination,
                 departure_time=departure_time,
@@ -57,3 +74,4 @@ class DirectionsClient(Client):
                 raise ApiError(e.status, e.message) from None
 
         return response
+

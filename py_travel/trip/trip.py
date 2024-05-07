@@ -1,39 +1,11 @@
 from datetime import datetime, date, timedelta
-from typing import Tuple, List, Dict, TypedDict, Any
+from typing import Tuple, List, Dict, Any
 
-from py_travel.exceptions import ClientNotInitializedError, TripWarning, InvalidResponseError
+from py_travel.exceptions import ClientNotInitializedError, TravelWarnings, InvalidResponseError
 from py_travel.location import Location, input_to_location
 from py_travel.utils import meters_to_miles, get_distance, get_duration, get_steps, calculate_stage_steps
-from .auxiliary_types import (
-    Stop,
-    TRIP_MODES,
-    AVOID_FEATURES,
-    TRANSIT_MODES,
-    TRANSIT_PREFERENCES,
-    TRAFFIC_MODE,
-    METRIC_SYSTEMS,
-)
-
-
-class TripConfig(TypedDict, total=False):
-    """
-    Contains the trip configuration variables
-
-    Attributes:
-        mode: Trip mode: driving, walking, bicycling or transit.
-        avoid: Features to avoid: tolls, highways, ferries, indoor or a combination of them
-        units: Unit system for the calculations: metric or imperial.
-        transit_mode: Transit mode if the mode is 'transit': bus, subway, train, tram, rail or a combination of them.
-        transit_routing_preference: Preference in calculations for transit: less_walking or fewer_transfer.
-        traffic_model: Traffic model to use if mode is 'driving': best_guess, optimistic or pessimistic.
-    """
-
-    mode: TRIP_MODES
-    avoid: List[AVOID_FEATURES] | AVOID_FEATURES
-    units: METRIC_SYSTEMS
-    transit_mode: List[TRANSIT_MODES] | TRANSIT_MODES
-    transit_routing_preference: TRANSIT_PREFERENCES
-    traffic_model: TRAFFIC_MODE
+from .trip_config import TripConfig
+from .stop import Stop
 
 
 class Trip:
@@ -433,12 +405,12 @@ class Trip:
             raise ClientNotInitializedError()
 
         if self.__arrival_date and self.__stops:
-            TripWarning.ignore_field("arrival_date", "Ignored for trips with stops")
+            TravelWarnings.ignore_field("arrival_date", "Ignored for trips with stops")
         elif (
             self.__arrival_date
             and not self.__config.get("mode", "not_configured") == "transit"
         ):
-            TripWarning.ignore_field("arrival_date", "Only used for transit mode")
+            TravelWarnings.ignore_field("arrival_date", "Only used for transit mode")
 
         # Make calls to the API
         if self.__stops:
@@ -510,7 +482,7 @@ class Trip:
         # Check departure date
         if not self.__departure_date and not self.__arrival_date:
             self.__departure_date = datetime.now()
-            TripWarning.update_date("departure", "No departure date provided")
+            TravelWarnings.update_date("departure", "No departure date provided")
         elif not self.__departure_date:
             if not self.__stops:
                 self.__departure_date = self.__arrival_date - timedelta(
@@ -520,7 +492,7 @@ class Trip:
                 self.__departure_date = self.__stops[0].departure_date - timedelta(
                     seconds=travel_times[0]
                 )
-            TripWarning.update_date("departure", "No departure date provided")
+            TravelWarnings.update_date("departure", "No departure date provided")
 
         # Check stop dates
         if self.__stops:
@@ -528,7 +500,7 @@ class Trip:
             for index, stop in enumerate(self.__stops):
                 stop_arrival = current_date + timedelta(seconds=travel_times[index])
                 if stop.departure_date < stop_arrival:
-                    TripWarning.update_date(
+                    TravelWarnings.update_date(
                         "stop", "Calculated arrival before departure date"
                     )
                     self.__stops[index] = Stop(stop.location, stop_arrival)
@@ -546,7 +518,7 @@ class Trip:
 
         if not self.__arrival_date:
             self.__arrival_date = new_arrival
-            TripWarning.update_date("arrival", "No arrival date provided")
+            TravelWarnings.update_date("arrival", "No arrival date provided")
         elif self.__arrival_date != new_arrival:
             self.__arrival_date = new_arrival
-            TripWarning.update_date("arrival", "Calculated arrival does not match")
+            TravelWarnings.update_date("arrival", "Calculated arrival does not match")

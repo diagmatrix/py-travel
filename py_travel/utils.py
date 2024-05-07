@@ -64,6 +64,20 @@ def calculate_stage_steps(steps: List[Tuple[int, int]], departure_date: datetime
     return calendar
 
 
+def init_clients(api_key: str) -> None:
+    """
+    Initializes the library provided clients for all classes that use them.
+
+    :param api_key: Google Maps API key
+    """
+    from py_travel import Client
+    from py_travel.trip import Trip
+
+    # Create clients
+    directions_client = Client(api_key)
+
+    Trip.set_client(directions_client)
+
 # ----------------------------------------------------------------------------------------------------------------------
 # PARSER FUNCTIONS
 
