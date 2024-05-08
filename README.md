@@ -4,6 +4,7 @@
 ![Python ^3.10](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/diagmatrix/py-travel/commit.yml)
 ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/diagmatrix/py-travel)
+![PyPI - Status](https://img.shields.io/pypi/status/py_travel)
 
 
 This is a Python library to use in conjunction with the 
@@ -25,14 +26,16 @@ and much more! It tries to bring a less JSON-oriented way of using the API.
 These instructions will get you a copy of the project up and running on your local machine for development and testing
 purposes.
 
-### Prerequisites
+### Local installation
+
+#### Prerequisites
 
 You will need the following:
 
  - Python >= 3.10
  - A Google Maps API key (for testing outside the testing environment)
 
-### Installing
+#### Installing
 
 For a local installation, just clone this repository inside the parent directory of your project.
 
@@ -48,6 +51,15 @@ pip install -r requirements.txt
 ````
 
 And there you have it! You can now use this library freely.
+
+### Installation
+
+This project is available in [PyPy](https://pypi.org/project/py-travel/), so you can install it using
+pip.
+
+````bash
+pip install py-travel
+````
 
 ## Usage
 
